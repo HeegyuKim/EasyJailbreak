@@ -14,6 +14,7 @@ from easyjailbreak.metrics.Evaluator import EvaluatorGenerativeJudge
 from easyjailbreak.attacker import AttackerBase
 from easyjailbreak.datasets import JailbreakDataset, Instance
 from easyjailbreak.mutation.rule import *
+from tqdm.auto import tqdm
 
 __all__ = ['Jailbroken']
      
@@ -32,17 +33,17 @@ class Jailbroken(AttackerBase):
         super().__init__(attack_model, target_model, eval_model, jailbreak_datasets)
         self.mutations = [
             Artificial(attr_name='query'),
-            Base64(attr_name='query'),
-            Base64_input_only(attr_name='query'),
-            Base64_raw(attr_name='query'),
-            Disemvowel(attr_name='query'),
-            Leetspeak(attr_name='query'),
-            Rot13(attr_name='query'),
+            # Base64(attr_name='query'),
+            # Base64_input_only(attr_name='query'),
+            # Base64_raw(attr_name='query'),
+            # Disemvowel(attr_name='query'),
+            # Leetspeak(attr_name='query'),
+            # Rot13(attr_name='query'),
             Combination_1(attr_name='query'),
             Combination_2(attr_name='query'),
             Combination_3(attr_name='query'),
-            Auto_payload_splitting(self.attack_model,attr_name='query'),
-            Auto_obfuscation(self.attack_model,attr_name='query'),
+            # Auto_payload_splitting(self.attack_model,attr_name='query'),
+            # Auto_obfuscation(self.attack_model,attr_name='query'),
 
         ]
         self.evaluator = EvaluatorGenerativeJudge(eval_model)
@@ -78,7 +79,7 @@ class Jailbroken(AttackerBase):
         logging.info("Jailbreak started!")
         self.attack_results = JailbreakDataset([])
         try:
-            for Instance in self.jailbreak_datasets:
+            for Instance in tqdm(self.jailbreak_datasets, desc="Jailbroken"):
                 results = self.single_attack(Instance)
                 for new_instance in results:
                     self.attack_results.add(new_instance)

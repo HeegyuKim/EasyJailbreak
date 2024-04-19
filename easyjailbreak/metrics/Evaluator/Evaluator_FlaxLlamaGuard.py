@@ -7,7 +7,7 @@ from easyjailbreak.datasets import Instance
 from easyjailbreak.metrics.Evaluator import Evaluator
 from easyjailbreak.models import from_pretrained, ModelBase
 
-class EvaluatorGenerativeJudgeFlax(Evaluator):
+class EvaluatorGenerativeJudgeFlaxLlamaGuard(Evaluator):
     def __init__(self, eval_model, prompt_pattern=None, attr_name: List[str] = None, special_method=None):
         """
         Initializes the evaluator with an optional evaluation model, prompt pattern, and attribute names.

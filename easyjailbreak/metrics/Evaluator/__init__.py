@@ -6,3 +6,4 @@ from .Evaluator_Match import EvalatorMatch
 from .Evaluator_GenerativeGetScore import EvaluatorGenerativeGetScore
 from .Evaluator_PatternJudge import EvaluatorPatternJudge
 from .Evaluator_ClassificationGetScore import EvaluatorClassificationGetScore
+from .Evaluator_FlaxLlamaGuard import EvaluatorGenerativeJudgeFlaxLlamaGuard
