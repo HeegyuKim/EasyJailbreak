@@ -1,7 +1,7 @@
 from easyjailbreak.models.flax_huggingface_model import FlaxAPI
 
 if __name__ == "__main__":
-    client = FlaxAPI("http://localhost:35020/")
+    client = FlaxAPI("http://34.29.8.219:35020/")
     # output = generator.generate("Hello, my name is")
     # print(output)
 
