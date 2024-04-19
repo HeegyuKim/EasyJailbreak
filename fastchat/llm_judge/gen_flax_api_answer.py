@@ -35,7 +35,7 @@ def get_answer(
     else:
         temperature = 0.7
 
-    model = FlaxAPI(f"http://{model}")
+    api_model = FlaxAPI(f"http://{model}")
 
     choices = []
     chat_state = None  # for palm-2 model
@@ -44,7 +44,7 @@ def get_answer(
         turns = []
         for j in range(len(question["turns"])):
             conv.append({'role': 'user', 'content': question["turns"][j]})
-            response = model.chat(conv)
+            response = api_model.chat(conv)
             conv.append({'role': 'assistant', 'content': response})
             turns.append(response)
 
