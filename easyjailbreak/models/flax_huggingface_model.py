@@ -240,7 +240,7 @@ class FlaxHuggingfaceModel(BlackBoxModelBase):
             conversations.insert(0, {'role': 'system', 'content': self.system_prompt})
 
         prompt = self.tokenizer.apply_chat_template(conversations, add_generation_prompt=True, tokenize=False) + generation_prefix
-        return self.generate(prompt, greedy=greedy)
+        return self.generate_prefix(prompt, greedy=greedy)
 
     def generate_messages(self, messages, clear_old_history=True, **kwargs):
         """
