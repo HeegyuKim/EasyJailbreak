@@ -1,7 +1,8 @@
 
-model=$1
-evaluator=$2
-defense=$3
+attack=$1
+model=$2
+evaluator=$3
+defense=$4
 
 if [ -z "$defense" ]; then
     echo "no defense"
@@ -12,7 +13,7 @@ python -m experiments.run_jailbreak \
     --target $model \
     --eval $evaluator \
     --defense "$defense" \
-    --attacker Jailbroken \
-    --limit 100 \
+    --attacker "$1" \
+    --limit 1 \
     --prompt_length 1024 \
     --max_new_tokens 128

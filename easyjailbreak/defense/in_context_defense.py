@@ -14,6 +14,8 @@ class InContextDefense(BaseDefense):
         super().__init__(model)
 
     def generate(self, messages, **kwargs):
+        if isinstance(messages, str):
+            messages = [messages]
         return self.model.generate(ICL_SHOTS + messages, **kwargs)
 
     def batch_generate(self, conversations, **kwargs):

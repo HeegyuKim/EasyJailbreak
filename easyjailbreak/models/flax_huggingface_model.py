@@ -287,7 +287,11 @@ class FlaxAPI(BlackBoxModelBase):
             server += "/"
             
         self.server = server
+        self.system_prompt = None
 
+    def set_system_message(self, prompt):
+        self.system_prompt = prompt
+    
     def chat(self, conversations, greedy = False, response_prefix: str = ""):
         """
             prompt: str,
@@ -301,6 +305,9 @@ class FlaxAPI(BlackBoxModelBase):
             user = conversations[i]['content']
             assistant = conversations[i+1]['content']
             history.append([user, assistant])
+            
+        if conversations[0]['role'] != 'system' and self.system_prompt is not None:
+            history.insert(0, {'role': 'user', 'content': self.system_prompt})
 
         body = {
             "conversations": conversations,

@@ -83,7 +83,7 @@ perturbations = {
     "RandomInsertPerturbation": RandomInsertPerturbation
 }
 
-class SmoothLLM(BaseDefense):
+class SmoothLLMDefense(BaseDefense):
     """SmoothLLM defense.
     
     Title: SmoothLLM: Defending Large Language Models Against 
@@ -124,30 +124,57 @@ class SmoothLLM(BaseDefense):
         )
 
     def generate(self, messages, **kwargs):
-        return self.model.generate(messages, **kwargs)
+        if isinstance(messages, str):
+            messages = [messages]
 
+        responses, safeties = [], []
+
+        for i in range(self.num_copies):
+            messages = self.perturb_message(messages)
+            response = self.model.generate(messages, **kwargs)
+            safety = self.is_jailbroken(response)
+
+            responses.append(response)
+            safeties.append(safety)
+
+        # Determine whether SmoothLLM was jailbroken
+        jb_percentage = np.mean(safeties)
+        smoothLLM_jb = True if jb_percentage > 0.5 else False
+        majority_responses = [
+            response for response, safety in zip(responses, safeties)
+            if safety == smoothLLM_jb
+        ]
+        return random.choice(majority_responses)
+
+    def perturb_message(self, messages):
+        messages = messages.copy()
+        messages[-1] = self.perturbation_fn(messages[-1])
+        return messages
+    
     def batch_generate(self, conversations, **kwargs):
         all_responses = [[] for _ in range(self.num_copies)] # 10 x 4(batch) array
         all_safety = [[] for _ in range(self.num_copies)]
 
         for i in range(self.num_copies):
-            items_perturb = messages.copy()
-            items_perturb[-1] = self.perturbation_fn(items_perturb[-1])
-            response = self.model.generate(items_perturb, **kwargs)
+            perturbed_conversations = [
+                self.perturb_message(conversation) for conversation in conversations
+            ]
+            responses = self.model.batch_generate(perturbed_conversations, **kwargs)
+            safety = [self.is_jailbroken(response) for response in responses]
+
             all_responses[i].extend(responses)
             all_safety[i].extend(safety)
 
         final_responses = []
-        for i in range(len(items)):
+        for i in range(len(conversations)):
             responses = [responses[i] for responses in all_responses]
             safety = [safety[i] for safety in all_safety]
 
             # Check whether the outputs jailbreak the LLM
-            are_copies_jailbroken = [s > 0 for s in all_safety[i]]
-            outputs_and_jbs = zip(responses, are_copies_jailbroken)
+            outputs_and_jbs = zip(responses, safety)
 
             # Determine whether SmoothLLM was jailbroken
-            jb_percentage = np.mean(are_copies_jailbroken)
+            jb_percentage = np.mean(safety)
             smoothLLM_jb = True if jb_percentage > 0.5 else False
 
             # Pick a response that is consistent with the majority vote
@@ -156,7 +183,8 @@ class SmoothLLM(BaseDefense):
                 if jb == smoothLLM_jb
             ]
             final_responses.append(random.choice(majority_outputs))
-        return self.model.batch_generate(conversations, **kwargs)
+
+        return final_responses
     
 
     def is_jailbroken(self, s):

@@ -8,9 +8,12 @@ REMINDER_SUFFIX = "\n\nRemember, you should be a responsible AI assistant and sh
 class SelfReminderDefense(BaseDefense):
     def __init__(self, model):
         super().__init__(model)
-        model.set_system_prompt(REMINDER_SYSTEM)
+        model.set_system_message(REMINDER_SYSTEM)
 
     def generate(self, messages, **kwargs):
+        if isinstance(messages, str):
+            messages = [messages]
+            
         messages[-1] = messages[-1] + REMINDER_SUFFIX
         return self.model.generate(messages, **kwargs)
 
