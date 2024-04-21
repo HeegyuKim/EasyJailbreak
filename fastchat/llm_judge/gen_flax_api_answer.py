@@ -18,10 +18,10 @@ from .common import (
     temperature_config,
 )
 from .gen_model_answer import reorg_answer_file
-from easyjailbreak.models import FlaxAPI
+from experiments.run_jailbreak import get_model, get_defensed_model
 
 def get_answer(
-    question: dict, model: str, num_choices: int, max_tokens: int, answer_file: str
+    question: dict, model_name: str, model, num_choices: int, max_tokens: int, answer_file: str
 ):
     assert (
         args.force_temperature is not None and "required_temperature" in question.keys()
@@ -35,8 +35,6 @@ def get_answer(
     else:
         temperature = 0.7
 
-    api_model = FlaxAPI(f"http://{model}")
-
     choices = []
     chat_state = None  # for palm-2 model
     for i in range(num_choices):
@@ -44,7 +42,7 @@ def get_answer(
         turns = []
         for j in range(len(question["turns"])):
             conv.append({'role': 'user', 'content': question["turns"][j]})
-            response = api_model.chat(conv)
+            response = model.chat(conv)
             conv.append({'role': 'assistant', 'content': response})
             turns.append(response)
 
@@ -54,7 +52,7 @@ def get_answer(
     ans = {
         "question_id": question["question_id"],
         "answer_id": shortuuid.uuid(),
-        "model_id": model,
+        "model_id": model_name,
         "choices": choices,
         "tstamp": time.time(),
     }
@@ -73,7 +71,8 @@ if __name__ == "__main__":
         help="The name of the benchmark question set.",
     )
     parser.add_argument("--answer-file", type=str, help="The output answer file.")
-    parser.add_argument("--model", type=str, default="gpt-3.5-turbo")
+    parser.add_argument("--model", type=str, required=True, help="The model name.")
+    parser.add_argument("--defense", type=str, default="")
     parser.add_argument(
         "--num-choices",
         type=int,
@@ -105,21 +104,35 @@ if __name__ == "__main__":
     question_file = f"fastchat/llm_judge/data/{args.bench_name}/question.jsonl"
     questions = load_questions(question_file, args.question_begin, args.question_end)
 
-    server, model = args.model.split("/", 1)
+    model, model_name = get_model(args.model, prompt_length=2048, generation_config={
+        "top_p": 0.95,
+        "top_k": 50,
+        "temperature": 1.0,
+        "max_new_tokens": args.max_tokens,
+    })
+    print(f"Using model {model_name}"
+)
+    if isinstance(args.defense, str) and args.defense != "":
+        model = get_defensed_model(args.defense, model)
+        print(f"Using defense {args.defense} on target model")
+        model_name = f"{model_name}-{args.defense}"
+    else:
+        print("No defense")
 
     if args.answer_file:
         answer_file = args.answer_file
     else:
-        answer_file = f"fastchat/llm_judge/data/{args.bench_name}/model_answer/{model}.jsonl"
+        # answer_file = f"fastchat/llm_judge/data/{args.bench_name}/model_answer/{model}.jsonl"
+        answer_file = f"outputs/{model_name}/MT-Bench.jsonl"
     print(f"Output to {answer_file}")
 
     for question in tqdm.tqdm(questions):
         get_answer(
             question,
-            server,
+            model_name,
+            model,
             args.num_choices,
             args.max_tokens,
             answer_file,
         )
-
     reorg_answer_file(answer_file)

@@ -12,9 +12,15 @@ nohup bash script/attack/jailbroken.sh "api@34.122.203.181:35020/meta-llama/Llam
 nohup bash script/attack/jailbroken.sh "google/gemma-1.1-7b-it" $evaluator > logs/gemma.log 2>&1 &
 
 
+# 각 공격기법 PoC
 bash script/attack/attack_poc.sh ReNeLLM "google/gemma-1.1-7b-it" api@34.29.8.219:35020/meta-llama/LlamaGuard-7b
 bash script/attack/attack_poc.sh GPTFuzz "google/gemma-1.1-7b-it" GPTFuzz
 
 
-nohup bash script/attack/attack_defense.sh "api@34.122.203.181:35020/meta-llama/Llama-2-7b-chat-hf" api@34.29.8.219:35020/meta-llama/LlamaGuard-7b > logs/llama.log 2>&1 &
+# defense baseline 점검
+nohup bash script/attack/attack_defense.sh "google/gemma-1.1-7b-it" api@34.29.8.219:35020/meta-llama/LlamaGuard-7b > logs/gemma.log 2>&1 &
+
+
+
 nohup bash script/attack/attack_defense.sh "api@34.122.186.170:35020/berkeley-nest/Starling-7b-LM-alpha" api@34.29.8.219:35020/meta-llama/LlamaGuard-7b > logs/starling.log 2>&1 &
+nohup bash script/attack/attack_defense.sh "api@34.66.3.179:35020/HuggingFaceH4/zephyr-7b-beta" api@34.29.8.219:35020/meta-llama/LlamaGuard-7b > logs/zephyr.log 2>&1 &

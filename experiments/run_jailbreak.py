@@ -20,11 +20,15 @@ def get_model(name, prompt_length, generation_config):
         model_name = name
 
     if model_type == "flax":
+        fsdp = "Starling-LM-7B" in model_name
+
         model = FlaxHuggingfaceModel(
             model_name_or_path=model_name,
             prompt_length=prompt_length,
             max_new_tokens=generation_config["max_new_tokens"],
             gen_args=generation_config,
+            fully_sharded_data_parallel=False,
+            mesh_axes_shape=(1, -1, 1, 1) if fsdp else (1, 1, 1, -1)
         )
     elif model_type == 'pt':
         model = from_pretrained(model_name)
@@ -87,12 +91,12 @@ def run_experiment(
     
     if attack_model is None:
         attack_model = target_model
-        print(f"Using target model as attack model: {attack_model}")
+        print(f"Using target model as attack model: {target}")
     else:
         print(f"Loading attack model {attack_model}...")
         attack_model, _ = get_model(attack_model, prompt_length=prompt_length, generation_config=generation_config)
     
-    if defense:
+    if isinstance(defense, str) and defense != "":
         target_model = get_defensed_model(defense, target_model)
         print(f"Using defense {defense} on target model")
 
@@ -124,6 +128,7 @@ def run_experiment(
                     eval_model=eval_model,
                     jailbreak_datasets=dataset)
 
+    # Classifier Eval
     elif attacker == "GPTFuzz":
         attacker = GPTFuzzer(attack_model=attack_model,
                             target_model=target_model,
