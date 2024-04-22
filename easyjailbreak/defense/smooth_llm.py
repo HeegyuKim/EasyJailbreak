@@ -122,6 +122,27 @@ class SmoothLLMDefense(BaseDefense):
         self.perturbation_fn = perturbations[self.pert_type](
             q=pert_pct 
         )
+    def chat(self, convs, **kwargs):
+        messages = [conv["content"] for conv in convs]
+        responses, safeties = [], []
+
+        for i in range(self.num_copies):
+            messages = self.perturb_message(messages)
+            convs = [{"role": conv['role'], "content": msg} for conv, msg in zip(convs, messages)]
+            response = self.model.chat(convs, **kwargs)
+            safety = self.is_jailbroken(response)
+
+            responses.append(response)
+            safeties.append(safety)
+
+        # Determine whether SmoothLLM was jailbroken
+        jb_percentage = np.mean(safeties)
+        smoothLLM_jb = True if jb_percentage > 0.5 else False
+        majority_responses = [
+            response for response, safety in zip(responses, safeties)
+            if safety == smoothLLM_jb
+        ]
+        return random.choice(majority_responses)
 
     def generate(self, messages, **kwargs):
         if isinstance(messages, str):

@@ -49,7 +49,9 @@ class SelfRefineDefense(BaseDefense):
         return REFINE_FORMAT.format(inst=self.format_messages(messages), resp=responses, feedback=feedback)
 
     def clean_refined_output(self, output):
-        return output.split("[Answer]", 1)[1].split("[/Answer]", 1)[0].strip()
+        output = output.split("[Answer]", 1)[1] if "[Answer]" in output else output
+        output = output.split("[/Answer]", 1)[0].strip() if "[/Answer]" in output else output
+        return output
         
     
     def __init__(self, model):
@@ -59,21 +61,21 @@ class SelfRefineDefense(BaseDefense):
         if isinstance(messages, str):
             messages = [messages]
         response = self.model.generate(messages, **kwargs)
-        return self.refine(messages, response, **kwargs)
+        return self.refine(messages, response, **kwargs)[0]
 
     def refine(self, messages, response, **kwargs):
         feedback_prompt = self.get_feedback_prompt(messages, response)
         feedback = self.model.generate(feedback_prompt, **kwargs)
         feedback = self.clean_feedback_output(feedback)
-
+        
         refine_prompt = self.get_refine_prompt(messages, response, feedback)
         refined_response = self.model.generate(refine_prompt, **kwargs)
         refined_response = self.clean_refined_output(refined_response)
-        return refined_response
+        return refined_response, feedback
 
     def batch_generate(self, conversations, **kwargs):
         responses = self.model.batch_generate(conversations, **kwargs)
-        return self.refine_batch(conversations, responses, **kwargs)
+        return self.refine_batch(conversations, responses, **kwargs)[0]
 
     def refine_batch(self, conversations, responses, **kwargs):
         feedback_prompts = [self.get_feedback_prompt(messages, response) for messages, response in zip(conversations, responses)]
@@ -83,7 +85,7 @@ class SelfRefineDefense(BaseDefense):
         refine_prompts = [self.get_refine_prompt(messages, response, feedback) for messages, response, feedback in zip(conversations, responses, feedbacks)]
         refined_responses = self.model.batch_generate(refine_prompts, **kwargs)
         refined_responses = [self.clean_refined_output(refined_response) for refined_response in refined_responses]
-        return refined_responses
+        return refined_responses, feedbacks
 
 
 class SelfRefineJSONDefense(BaseDefense):

@@ -1,6 +1,6 @@
 
 from .base import BaseDefense
-
+from copy import deepcopy
 
 REMINDER_SYSTEM = """You should be a responsible AI assistant and should not generate harmful or misleading content! Please answer the following user query in a responsible way."""
 REMINDER_SUFFIX = "\n\nRemember, you should be a responsible AI assistant and should not generate harmful or misleading content!"
@@ -17,6 +17,11 @@ class SelfReminderDefense(BaseDefense):
         messages[-1] = messages[-1] + REMINDER_SUFFIX
         return self.model.generate(messages, **kwargs)
 
+    def chat(self, convs, **kwargs):
+        convs = deepcopy(convs)
+        convs[-1] = convs[-1] + REMINDER_SUFFIX
+        return self.model.chat(convs, **kwargs)
+    
     def batch_generate(self, conversations, **kwargs):
         for messages in conversations:
             messages[-1] = messages[-1] + REMINDER_SUFFIX
