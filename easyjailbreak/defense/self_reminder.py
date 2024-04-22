@@ -19,7 +19,7 @@ class SelfReminderDefense(BaseDefense):
 
     def chat(self, convs, **kwargs):
         convs = deepcopy(convs)
-        convs[-1] = convs[-1] + REMINDER_SUFFIX
+        convs[-1]['content'] = convs[-1]['content'] + REMINDER_SUFFIX
         return self.model.chat(convs, **kwargs)
     
     def batch_generate(self, conversations, **kwargs):

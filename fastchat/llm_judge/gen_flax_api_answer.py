@@ -122,8 +122,10 @@ if __name__ == "__main__":
     if args.answer_file:
         answer_file = args.answer_file
     else:
-        # answer_file = f"fastchat/llm_judge/data/{args.bench_name}/model_answer/{model}.jsonl"
-        answer_file = f"outputs/{model_name}/MT-Bench.jsonl"
+        if args.defense:
+            answer_file = f"outputs/{model_name}/MT-Bench-{args.defense}.jsonl"
+        else:
+            answer_file = f"outputs/{model_name}/MT-Bench.jsonl"
     print(f"Output to {answer_file}")
 
     for question in tqdm.tqdm(questions):

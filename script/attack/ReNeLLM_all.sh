@@ -8,8 +8,18 @@ if [ -z "$model" ]; then
 fi
 
 # api@34.122.186.170:35020/berkeley-nest/Starling-LM-7B-alpha
+
+# zephyr in v2-C
 # api@34.66.3.179:35020/HuggingFaceH4/zephyr-7b-beta
+
+# zephyr in TPU v3-E
+# api@34.90.55.42:35020/HuggingFaceH4/zephyr-7b-beta
+
+# llama v2-D
 # api@34.122.203.181:35020/meta-llama/Llama-2-7b-chat-hf
+
+# llama v3-C
+# api@35.204.152.13:35020/meta-llama/Llama-2-7b-chat-hf
 
 
 attack(){
@@ -29,7 +39,7 @@ attack(){
         --prompt_length 1024 \
         --max_new_tokens 1024
 }
-attack 
+# attack 
 attack "self-reminder"
 attack "in-context"
 attack "smooth-llm"

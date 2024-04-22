@@ -224,12 +224,26 @@ class FlaxHuggingfaceModel(BlackBoxModelBase):
         return self.tokenizer.decode(predicted_token[0], skip_special_tokens=True)
 
     def generate(self,
-               user_message: str,
+               messages: str,
                generation_prefix: str = "",
                greedy: bool = False,
+               clear_old_history=True,
                **kwargs
                ):
-        return self.chat([{'role': 'user', 'content': user_message}], generation_prefix, greedy, **kwargs)
+        if clear_old_history:
+            self.conversation = []
+
+        if isinstance(messages, str):
+            messages = [messages]
+
+        for index, message in enumerate(messages):
+            self.conversation.append({
+                'role': 'user' if index % 2 == 0 else 'assistant', 
+                'content': message
+                })
+            
+
+        return self.chat(self.conversation, generation_prefix, greedy, **kwargs)
         
     def chat(self,
                conversations: list,
