@@ -52,7 +52,7 @@ def get_developer(model_name):
     get model developer
     """
     developer_dict = {"llama2": "Meta"}
-    return developer_dict[model_name]
+    return developer_dict.get(model_name, model_name.split("/", 1)[0])
 
 
 def generate(model: AutoModelForCausalLM, tokenizer, input_ids, assistant_role_slice, gen_config=None):
@@ -581,7 +581,9 @@ class autodan_PrefixManager:
         self.conv_template.append_message(self.conv_template.roles[1], f"{self.target}")
         prompt = self.conv_template.get_prompt()
 
-        encoding = self.tokenizer(prompt)
+        encoding = self.tokenizer(prompt, add_special_tokens=False)
+        print(prompt)
+        print(self.tokenizer.decode(encoding.input_ids, skip_special_tokens=False))
         toks = encoding.input_ids
 
         if self.conv_template.name == 'llama-2':
@@ -645,7 +647,7 @@ class autodan_PrefixManager:
             else:
                 self._system_slice = slice(
                     None,
-                    encoding.char_to_token(len(self.conv_template.system))
+                    encoding.char_to_token(len(self.conv_template.system_template))
                 )
                 self._user_role_slice = slice(
                     encoding.char_to_token(prompt.find(self.conv_template.roles[0])),
