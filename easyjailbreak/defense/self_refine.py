@@ -64,6 +64,8 @@ class SelfRefineDefense(BaseDefense):
         return self.refine(messages, response, **kwargs)[0]
 
     def refine(self, messages, response, **kwargs):
+        if isinstance(messages, str):
+            messages = [messages]
         feedback_prompt = self.get_feedback_prompt(messages, response)
         feedback = self.model.generate(feedback_prompt, **kwargs)
         feedback = self.clean_feedback_output(feedback)
@@ -98,6 +100,8 @@ class SelfRefineDefenseAdvancedV1(BaseDefense):
         return inst
     
     def refine(self, messages, response, **kwargs):
+        if isinstance(messages, str):
+            messages = [messages]
         feedback_prompt = self.get_feedback_prompt(messages, response)
         feedback = self.model.generate(feedback_prompt, generation_prefix=ADV_FEEDBACK_PREFIX, **kwargs)
         feedback = ADV_FEEDBACK_PREFIX + self.clean_feedback_output(feedback)

@@ -4,7 +4,7 @@ from ..models import BlackBoxModelBase
 class BaseDefense(BlackBoxModelBase):
     def __init__(self, model):
         self.model = model
-        self.tokenizer = model.tokenizer
+        self.tokenizer = model.tokenizer if hasattr(model, "tokenizer") else None
     
     def __call__(self, *args: Any, **kwds: Any) -> Any:
         return self.model(*args, **kwds)

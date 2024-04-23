@@ -7,7 +7,7 @@ import jsonlines
 import os
 
 from experiments.run_jailbreak import get_model
-from easyjailbreak.defense.self_refine import SelfRefineDefense, SelfRefineJSONDefense
+from easyjailbreak.defense.self_refine import SelfRefineDefense, SelfRefineDefenseAdvancedV1
 
 
 
@@ -31,8 +31,8 @@ def run_experiment(
     
     if defense == "self-refine":
         target_model = SelfRefineDefense(target_model)
-    elif defense == "self-refine-json":
-        target_model = SelfRefineJSONDefense(target_model)
+    elif defense == "self-refine-adv-v1":
+        target_model = SelfRefineDefenseAdvancedV1(target_model)
     else:
         raise ValueError(f"Defense {defense} not recognized")
 
