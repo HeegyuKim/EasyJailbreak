@@ -40,6 +40,6 @@ attack(){
         --max_new_tokens 1024
 }
 # attack 
-attack "self-reminder"
+# attack "self-reminder"
 attack "in-context"
-attack "smooth-llm"
+# attack "smooth-llm"

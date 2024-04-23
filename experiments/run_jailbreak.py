@@ -11,6 +11,8 @@ from easyjailbreak.models import from_pretrained
 from easyjailbreak.datasets import JailbreakDataset
 from easyjailbreak.metrics.Evaluator import EvaluatorGenerativeJudge, EvaluatorGenerativeJudgeFlaxLlamaGuard
 from easyjailbreak.defense import SmoothLLMDefense, InContextDefense, SelfReminderDefense
+from easyjailbreak.defense.self_refine import SelfRefineDefense
+
 
 def get_model(name, prompt_length, generation_config):
     if "@" in name:
@@ -55,6 +57,8 @@ def get_defensed_model(defense, model):
         defense_model = InContextDefense(model)
     elif defense == "smooth-llm":
         defense_model = SmoothLLMDefense(model)
+    elif defense == "self-refine":
+        defense_model = SelfRefineDefense(model)
     else:
         raise ValueError(f"Unsupported defense: {defense}")
     return defense_model

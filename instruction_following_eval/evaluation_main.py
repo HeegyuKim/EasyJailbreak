@@ -265,6 +265,7 @@ def main(argv):
     output_file_name = os.path.join(
         _OUTPUT_DIR.value, output_file_name + ".jsonl"
     )
+    os.makedirs(os.path.dirname(output_file_name), exist_ok=True)
     write_outputs(output_file_name, outputs)
     logging.info("Generated: %s", output_file_name)
 

@@ -2,7 +2,7 @@ import fire
 from tqdm.auto import tqdm
 from typing import Optional
 import jsonlines
-
+import os
 from experiments.run_jailbreak import get_defensed_model, get_model
 
 
@@ -34,8 +34,15 @@ def run_experiment(
         save_path = f"outputs/{target_name}/IFEval.jsonl"
 
 
+    if os.path.exists(save_path):
+        with jsonlines.open(save_path) as reader:
+            skip_count = len(list(reader))
+            dataset = dataset[skip_count:]
+    else:
+        skip_count = 0
+
     print(f"Saving results to {save_path}...")
-    with jsonlines.open(save_path, "w") as writer:
+    with jsonlines.open(save_path, "a") as writer:
         for i, instance in enumerate(tqdm(dataset, desc=f"IFEval-{target_name} {defense}")):
             output = target_model.generate(instance["prompt"], greedy=True)
             writer.write({"prompt": instance["prompt"], "response": output})
