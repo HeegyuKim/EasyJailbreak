@@ -6,11 +6,13 @@ import fire
 from easyjailbreak.attacker.AutoDAN_Liu_2023 import *
 from easyjailbreak.datasets import JailbreakDataset
 from easyjailbreak import models
+from .run_jailbreak import get_defensed_model
 
 
 def main(
         model_name: str,
         template: str,
+        defense: str = None,
         limit: int = 100
         ):
     device='cuda:0' if torch.cuda.is_available() else 'cpu'
@@ -34,7 +36,7 @@ def main(
     # attacker初始化
     attacker = AutoDAN(
         attack_model=llama2,
-        target_model=llama2,
+        target_model=get_defensed_model(defense, llama2) if isinstance(defense, str) and defense != "" else llama2,
         jailbreak_datasets=dataset,
         eval_model = None,
         max_query=100,
@@ -57,7 +59,11 @@ def main(
 
     attacker.attack()
 
-    output_path = f"outputs/AdvBench/{model_name}/AutoDAN.jsonl"
+    if defense:
+        output_path = f"outputs/AdvBench/{model_name}/AutoDAN-{defense}.jsonl"
+    else:
+        output_path = f"outputs/AdvBench/{model_name}/AutoDAN.jsonl"
+
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     attacker.attack_results.save_to_jsonl(output_path)
 

@@ -29,6 +29,7 @@ from easyjailbreak.mutation.generation import Rephrase
 from easyjailbreak.mutation.rule import CrossOver, ReplaceWordsWithSynonyms
 from easyjailbreak.metrics.Evaluator import EvaluatorPatternJudge
 from easyjailbreak.seed import SeedTemplate
+from easyjailbreak.defense.base import BaseDefense
 
 __all__ = ["AutoDAN", "autodan_PrefixManager"]
 
@@ -341,8 +342,10 @@ class AutoDAN(AttackerBase):
 
         adv_prefix = best_new_adv_prefix
 
+        model = self.target_model.model.model if isinstance(self.target_model, BaseDefense) else self.target_model.model
+
         output_ids = generate(
-            model=self.target_model.model,
+            model=model,
             tokenizer=self.target_model.tokenizer,
             input_ids=prefix_manager.get_input_ids(adv_string=adv_prefix).to(self.device),
             assistant_role_slice=prefix_manager._assistant_role_slice,
@@ -582,8 +585,8 @@ class autodan_PrefixManager:
         prompt = self.conv_template.get_prompt()
 
         encoding = self.tokenizer(prompt, add_special_tokens=False)
-        print(prompt)
-        print(self.tokenizer.decode(encoding.input_ids, skip_special_tokens=False))
+        # print(prompt)
+        # print(self.tokenizer.decode(encoding.input_ids, skip_special_tokens=False))
         toks = encoding.input_ids
 
         if self.conv_template.name == 'llama-2':

@@ -4,7 +4,12 @@ from typing import Optional
 import torch
 from transformers import RobertaForSequenceClassification, RobertaTokenizer
 from easyjailbreak.attacker import Jailbroken, CodeChameleon, PAIR, ReNeLLM, GPTFuzzer
-from easyjailbreak.models.flax_huggingface_model import FlaxAPI, FlaxHuggingfaceModel
+try:
+    from easyjailbreak.models.flax_huggingface_model import FlaxHuggingfaceModel
+except ImportError:
+    print("Flax is not installed. Flax models will not be available.")
+    pass
+from easyjailbreak.models.flax_api import FlaxAPI
 from easyjailbreak.models.huggingface_model import HuggingfaceModel
 from easyjailbreak.models.openai_model import OpenaiModel
 from easyjailbreak.models import from_pretrained
@@ -14,9 +19,13 @@ from easyjailbreak.defense import SmoothLLMDefense, InContextDefense, SelfRemind
 from easyjailbreak.defense.self_refine import SelfRefineDefense
 
 
+
 def get_model(name, prompt_length, generation_config):
     if "@" in name:
         model_type, model_name = name.split("@", 1)
+    elif name == "GPTFuzz":
+        model_type = "GPTFuzz"
+        model_name = name
     else:
         model_type = "pt" if torch.cuda.is_available() else "flax"
         model_name = name
@@ -33,7 +42,16 @@ def get_model(name, prompt_length, generation_config):
             mesh_axes_shape=(1, -1, 1, 1) if fsdp else (1, 1, 1, -1)
         )
     elif model_type == 'pt':
-        model = from_pretrained(model_name)
+        if "Llama" in model_name:
+            template = "llama-2"
+        elif "Starling-LM" in model_name:
+            template = "openchat_3.5"
+        elif "zephyr" in model_name:
+            template = "zephyr"
+        else:
+            raise ValueError(f"Unsupported model: {model_name}")
+
+        model = from_pretrained(model_name, template, dtype=torch.bfloat16, **generation_config)
     elif model_type == "api":
         # api@0.0.0.0:35020/meta-llama/llama2
         server, model_name = model_name.split("/", 1)
@@ -42,9 +60,9 @@ def get_model(name, prompt_length, generation_config):
         model = OpenaiModel(model_name=model_name, api_keys=os.environ['OPENAI_API_KEY'])
     elif model_type == "GPTFuzz":
         model_path = 'hubert233/GPTFuzz'
-        judge_model = RobertaForSequenceClassification.from_pretrained(model_path)
+        judge_model = RobertaForSequenceClassification.from_pretrained(model_path).eval().cuda()
         judge_tokenizer = RobertaTokenizer.from_pretrained(model_path)
-        model = HuggingfaceModel(model=judge_model, tokenizer=judge_tokenizer, model_name='zero_shot')
+        model = HuggingfaceModel(model=judge_model, tokenizer=judge_tokenizer, model_name='zero_shot', generation_config=generation_config)
     else:
         raise ValueError(f"Unsupported model type: {model_type}")
     
@@ -138,7 +156,7 @@ def run_experiment(
                             target_model=target_model,
                             eval_model=eval_model,
                             jailbreak_datasets=dataset,
-                            max_iteration=100,
+                            max_iteration=20,
                             max_query=  10000,
                             max_jailbreak= 1000,
                             max_reject= 10000)

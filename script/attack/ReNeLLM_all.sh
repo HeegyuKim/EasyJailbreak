@@ -39,7 +39,7 @@ attack(){
         --prompt_length 1024 \
         --max_new_tokens 1024
 }
-# attack 
-# attack "self-reminder"
+attack 
+attack "self-reminder"
 attack "in-context"
 # attack "smooth-llm"
