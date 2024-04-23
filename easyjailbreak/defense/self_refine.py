@@ -88,7 +88,8 @@ class SelfRefineDefense(BaseDefense):
         return refined_responses, feedbacks
 
 
-class SelfRefineJSONDefense(BaseDefense):
+ADV_FEEDBACK_PREFIX="The problem with this response is that"
+class SelfRefineDefenseAdvancedV1(BaseDefense):
 
     def format_messages(self, messages):
         messages = [{"role": "User:" if i == 0 else "Assistant:", "content": msg} + msg for i, msg in enumerate(messages)]
@@ -96,3 +97,22 @@ class SelfRefineJSONDefense(BaseDefense):
         inst = "\n".join(messages)
         return inst
     
+    def refine(self, messages, response, **kwargs):
+        feedback_prompt = self.get_feedback_prompt(messages, response)
+        feedback = self.model.generate(feedback_prompt, generation_prefix=ADV_FEEDBACK_PREFIX, **kwargs)
+        feedback = ADV_FEEDBACK_PREFIX + self.clean_feedback_output(feedback)
+        
+        refine_prompt = self.get_refine_prompt(messages, response, feedback)
+        refined_response = self.model.generate(refine_prompt, **kwargs)
+        refined_response = self.clean_refined_output(refined_response)
+        return refined_response, feedback
+
+    def refine_batch(self, conversations, responses, **kwargs):
+        feedback_prompts = [self.get_feedback_prompt(messages, response) for messages, response in zip(conversations, responses)]
+        feedbacks = self.model.batch_generate(feedback_prompts, generation_prefix=ADV_FEEDBACK_PREFIX, **kwargs)
+        feedbacks = [ADV_FEEDBACK_PREFIX + self.clean_feedback_output(feedback) for feedback in feedbacks]
+
+        refine_prompts = [self.get_refine_prompt(messages, response, feedback) for messages, response, feedback in zip(conversations, responses, feedbacks)]
+        refined_responses = self.model.batch_generate(refine_prompts, **kwargs)
+        refined_responses = [self.clean_refined_output(refined_response) for refined_response in refined_responses]
+        return refined_responses, feedbacks

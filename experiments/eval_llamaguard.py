@@ -6,6 +6,7 @@ import glob
 import jsonlines
 from easyjailbreak.models.flax_huggingface_model import FlaxAPI, FlaxHuggingfaceModel
 
+# python -m experiments.eval_llamaguard
 
 def main():
     generation_config = dict(

@@ -105,7 +105,7 @@ class HuggingfaceModel(WhiteBoxModelBase):
         """
         self.conversation.messages = []
 
-    def generate(self, messages, input_field_name='input_ids', clear_old_history=True, **kwargs):
+    def generate(self, messages, input_field_name='input_ids', clear_old_history=True, generation_prefix: str = "", **kwargs):
         r"""
         Generates a response for the given messages within a single conversation.
 
@@ -119,7 +119,7 @@ class HuggingfaceModel(WhiteBoxModelBase):
             messages = [messages]
         prompt = self.create_conversation_prompt(messages, clear_old_history=clear_old_history)
 
-        input_ids = self.tokenizer(prompt,
+        input_ids = self.tokenizer(prompt + generation_prefix,
                                    return_tensors='pt',
                                    add_special_tokens=False).input_ids.to(self.model.device.index)
         input_length = len(input_ids[0])
@@ -130,7 +130,7 @@ class HuggingfaceModel(WhiteBoxModelBase):
 
         return output
 
-    def batch_generate(self, conversations, **kwargs)-> List[str]:
+    def batch_generate(self, conversations, generation_prefix: str = "", **kwargs)-> List[str]:
         r"""
         Generates responses for a batch of conversations.
 
@@ -147,7 +147,7 @@ class HuggingfaceModel(WhiteBoxModelBase):
                               'please construct a list[str] for each conversation, or they will be divided into individual sentences. '
                               'Switch input type of batch_generate() to list[list[str]] to avoid this warning.')
                 conversation = [conversation]
-            prompt_list.append(self.create_conversation_prompt(conversation))
+            prompt_list.append(self.create_conversation_prompt(conversation) + generation_prefix)
         input_ids = self.tokenizer(prompt_list,
                                    return_tensors='pt',
                                    padding=True,
